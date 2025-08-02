@@ -10,19 +10,18 @@ from telegram.ext import (
 )
 from dotenv import load_dotenv
 
-# Загрузка токенов из .env файла
 load_dotenv("tokens.env")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
-# Настройка логов
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Хранилище истории пользователей
+
 user_history: Dict[int, List[Dict[str, str]]] = {}
 
-# Клавиатура с кнопкой "Новый запрос"
+
 keyboard = ReplyKeyboardMarkup(
     [[KeyboardButton("Новый запрос")]],
     resize_keyboard=True,
@@ -30,7 +29,7 @@ keyboard = ReplyKeyboardMarkup(
 )
 
 async def ask_deepseek(prompt: str, history: list) -> str:
-    """Отправляет запрос к DeepSeek API"""
+    
     url = "https://api.deepseek.com/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
@@ -53,7 +52,7 @@ async def ask_deepseek(prompt: str, history: list) -> str:
             logger.error(f"Request failed: {e}")
             raise
 
-# Обработчик команды /start
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     user_history[user_id] = []
@@ -62,11 +61,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=keyboard
     )
 
-# Обработчик команды /help
+
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Просто отправь мне сообщение — я отвечу с помощью DeepSeek AI!")
 
-# Обработка текстовых сообщений
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     text = update.message.text.strip()
@@ -80,13 +79,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_history[user_id] = []
 
     try:
-        # Добавляем сообщение пользователя в историю
+        
         user_history[user_id].append({"role": "user", "content": text})
 
-        # Получаем ответ от DeepSeek
+        
         reply = await ask_deepseek(text, user_history[user_id])
         
-        # Добавляем ответ бота в историю
+        
         user_history[user_id].append({"role": "assistant", "content": reply})
 
         await update.message.reply_text(reply, reply_markup=keyboard)
@@ -95,7 +94,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"Ошибка при обращении к DeepSeek: {e}")
         await update.message.reply_text("Произошла ошибка при получении ответа. Попробуйте позже.")
 
-# Запуск бота
+
 def main():
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
@@ -107,4 +106,5 @@ def main():
     app.run_polling()
 
 if __name__ == "__main__":
+
     main()
